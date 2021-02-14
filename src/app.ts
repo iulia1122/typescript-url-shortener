@@ -2,8 +2,7 @@ import express from 'express';
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
-import Database from './Core/Classes/Database';
-import UrlGenerator from './Core/Classes/UrlGenerator';
+import UrlController from './Controllers/UrlController'
 
 const app = express();
 const port = 3000;
@@ -16,34 +15,38 @@ app.options('*', cors())
 
 app.post('/url/shorten', async (req, res) => {
 
-    if(!req.body.url) {
+    if (!req.body.url) {
         return res.send('Missing url parameter').status(422)
     }
 
     let longUrl = req.body.url
+    let document :{any: any} | {} = {}
 
-    let db = new Database()
+    try {
 
-    await db.connect()
+        let controller = new UrlController();
+        document = controller.generateShortUrl(longUrl)
 
-    let document = {
-        longUrl: longUrl,
-        shortUrl: `https://pbid.io/${new UrlGenerator().execute()}`
+    } catch (error) {
+        return res.send('Something went wrong.').status(422)
     }
-    await db.save(document)
 
-    db.closeConnection()
     return res.send(document).status(201)
 });
 
 app.get('/url/all', async (req, res) => {
-  
-    let db = new Database()
 
-    await db.connect()
+    let docs: any[] | undefined = []
 
-    let docs = await db.listAll()
-    db.closeConnection()
+    try {
+
+        let controller = new UrlController();
+        docs = await controller.getAllUrls()
+
+    } catch (error) {
+        return res.send('Something went wrong.').status(422)
+    }
+
     return res.send(docs).status(200)
 })
 
