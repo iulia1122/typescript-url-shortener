@@ -1,11 +1,12 @@
 import express from 'express';
-const bodyParser = require('body-parser');
-const cors = require('cors');
+let bodyParser = require('body-parser');
+let cors = require('cors');
+let validator = require('validator');
 
 import UrlController from './Controllers/UrlController'
 
-const app = express();
-const port = 3000;
+let app = express();
+let port = 3000;
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -15,23 +16,29 @@ app.options('*', cors())
 
 app.post('/url/shorten', async (req, res) => {
 
-    if (!req.body.url) {
+    let longUrl = req.body.url
+
+    if (!longUrl) {
         return res.send('Missing url parameter').status(422)
     }
 
-    let longUrl = req.body.url
+    if (!validator.isURL(longUrl)) {
+        return res.status(422).send('Invalid url')
+    }
+
     let document :{any: any} | {} = {}
 
     try {
 
         let controller = new UrlController();
-        document = controller.generateShortUrl(longUrl)
+        document = await controller.generateShortUrl(longUrl)
+        return res.send(document).status(201)
 
     } catch (error) {
         return res.send('Something went wrong.').status(422)
     }
 
-    return res.send(document).status(201)
+
 });
 
 app.get('/url/all', async (req, res) => {
@@ -54,10 +61,3 @@ app.get('/url/all', async (req, res) => {
 app.listen(port, () => {
     return console.log(`server is listening on ${port}`);
 });
-
-
-// docker-compose -f stack.yml up
-
-// docker run -p 3000:3000 backend
-
-// docker build -t backend .
