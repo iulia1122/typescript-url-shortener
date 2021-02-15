@@ -26,7 +26,11 @@ app.post('/url/shorten', async (req, res) => {
         return res.status(422).send('Invalid url')
     }
 
-    let document :{any: any} | {} = {}
+    let document: {
+        _id: string,
+        shortUrl: string,
+        longUrl: string
+    } | {} = {}
 
     try {
 
